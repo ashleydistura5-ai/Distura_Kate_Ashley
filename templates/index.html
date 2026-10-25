@@ -171,6 +171,7 @@
         .empty-message {
             color: #796b89;
             padding: 15px 0;
+            overflow-wrap: anywhere;
         }
 
         .api-result {
@@ -233,12 +234,6 @@
         .student-table .action-buttons button {
             margin: 3px;
             padding: 9px 12px;
-        }
-
-        .student-table .empty-cell {
-            text-align: center;
-            padding: 25px;
-            color: #796b89;
         }
 
         footer {
@@ -309,20 +304,25 @@
 
         <section class="card">
             <h2>🎓 Course Information</h2>
+
             <button type="button" onclick="loadCourse()">
                 Load Course Information
             </button>
+
             <div id="courseResult" class="api-result" hidden></div>
         </section>
 
         <section class="card">
             <h2>💻 Skills</h2>
+
             <button type="button" onclick="loadSkills()">Load Skills</button>
+
             <div id="skillsResult" class="api-result" hidden></div>
         </section>
 
         <section class="card">
             <h2>📝 Student CRUD Management</h2>
+
             <p class="description">
                 Add new students, select a student to edit their information,
                 or delete a student from the database.
@@ -334,54 +334,33 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="studentId">Student ID</label>
-                        <input
-                            type="text"
-                            id="studentId"
-                            placeholder="e.g. 2026-001"
-                            required
-                        >
+                        <input type="text" id="studentId"
+                               placeholder="e.g. 2026-001" required>
                     </div>
 
                     <div class="form-group">
                         <label for="studentName">Full Name</label>
-                        <input
-                            type="text"
-                            id="studentName"
-                            placeholder="Enter full name"
-                            required
-                        >
+                        <input type="text" id="studentName"
+                               placeholder="Enter full name" required>
                     </div>
 
                     <div class="form-group">
                         <label for="program">Program</label>
-                        <input
-                            type="text"
-                            id="program"
-                            placeholder="e.g. BSIT"
-                            required
-                        >
+                        <input type="text" id="program"
+                               placeholder="e.g. BSIT" required>
                     </div>
 
                     <div class="form-group">
                         <label for="year">Year</label>
-                        <input
-                            type="number"
-                            id="year"
-                            min="1"
-                            max="10"
-                            placeholder="e.g. 3"
-                            required
-                        >
+                        <input type="number" id="year"
+                               min="1" max="10"
+                               placeholder="e.g. 3" required>
                     </div>
 
                     <div class="form-group">
                         <label for="section">Section</label>
-                        <input
-                            type="text"
-                            id="section"
-                            placeholder="e.g. B"
-                            required
-                        >
+                        <input type="text" id="section"
+                               placeholder="e.g. B" required>
                     </div>
                 </div>
 
@@ -390,26 +369,20 @@
                         ➕ Add Student
                     </button>
 
-                    <button
-                        type="button"
-                        class="secondary-btn"
-                        onclick="resetForm()"
-                    >
+                    <button type="button" class="secondary-btn"
+                            onclick="resetForm()">
                         Clear Form
                     </button>
                 </div>
             </form>
 
-            <div
-                id="crudMessage"
-                class="status-message"
-                role="status"
-                aria-live="polite"
-            ></div>
+            <div id="crudMessage" class="status-message"
+                 role="status" aria-live="polite"></div>
         </section>
 
         <section class="card">
             <h2>👥 Students from Database</h2>
+
             <p class="description">
                 These student records are retrieved directly from your
                 SQLite database. Select a record to edit or delete it.
@@ -424,6 +397,29 @@
             </div>
         </section>
 
+        <section class="card">
+            <h2>🤝 Classmate's Records</h2>
+
+            <p class="description">
+                Retrieve and view student records from your classmate's
+                deployed Flask API.
+            </p>
+
+            <button type="button" id="loadClassmateButton"
+                    onclick="loadClassmateRecords()">
+                🌐 Load Classmate's Records
+            </button>
+
+            <div id="classmateMessage" class="status-message"
+                 role="status" aria-live="polite"></div>
+
+            <div id="classmateRecords">
+                <p class="empty-message">
+                    Click the button to load your classmate's records.
+                </p>
+            </div>
+        </section>
+
         <footer>
             Student API Interface | Flask and SQLite Database
         </footer>
@@ -433,6 +429,9 @@
     <script>
         let selectedStudentId = null;
         let studentsCache = [];
+
+        const classmateAPI =
+            "https://ladoing-kc-jane-marie.onrender.com/api/students";
 
         function showMessage(message, type) {
             const box = document.getElementById('crudMessage');
@@ -445,7 +444,7 @@
 
             if (!response.ok) {
                 throw new Error(
-                    data.error || 'The request could not be completed.'
+                    data.error || `Request failed: ${response.status}`
                 );
             }
 
@@ -475,7 +474,6 @@
                     const strong = document.createElement('strong');
 
                     strong.textContent = label + ': ';
-
                     p.append(
                         strong,
                         document.createTextNode(value ?? 'Not available')
@@ -501,7 +499,7 @@
                 );
 
                 const data = await getResponseData(response);
-                result.textContent = data.message;
+                result.textContent = data.message ?? JSON.stringify(data);
             } catch (error) {
                 result.textContent = error.message;
             }
@@ -518,10 +516,10 @@
                 const data = await getResponseData(response);
 
                 result.textContent =
-                    'Course: ' + data.course +
-                    ' | Code: ' + data.code +
-                    ' | Year: ' + data.year +
-                    ' | Section: ' + data.section;
+                    'Course: ' + (data.course ?? 'Not available') +
+                    ' | Code: ' + (data.code ?? 'Not available') +
+                    ' | Year: ' + (data.year ?? 'Not available') +
+                    ' | Section: ' + (data.section ?? 'Not available');
             } catch (error) {
                 result.textContent = error.message;
             }
@@ -537,7 +535,13 @@
                 const response = await fetch('/skills');
                 const data = await getResponseData(response);
 
-                result.textContent = 'Skills: ' + data.skills.join(', ');
+                const skills = Array.isArray(data.skills)
+                    ? data.skills
+                    : [];
+
+                result.textContent = skills.length
+                    ? 'Skills: ' + skills.join(', ')
+                    : JSON.stringify(data);
             } catch (error) {
                 result.textContent = error.message;
             }
@@ -589,12 +593,8 @@
                 const headerRow = document.createElement('tr');
 
                 [
-                    'Student ID',
-                    'Full Name',
-                    'Program',
-                    'Year',
-                    'Section',
-                    'Actions'
+                    'Student ID', 'Full Name', 'Program',
+                    'Year', 'Section', 'Actions'
                 ].forEach(title => {
                     const th = document.createElement('th');
                     th.textContent = title;
@@ -612,15 +612,13 @@
                         row.classList.add('selected');
                     }
 
-                    const values = [
+                    [
                         student.student_id,
                         student.name,
                         student.program,
                         student.year,
                         student.section
-                    ];
-
-                    values.forEach(value => {
+                    ].forEach(value => {
                         const td = document.createElement('td');
                         td.textContent = value ?? '';
                         row.appendChild(td);
@@ -633,7 +631,6 @@
                     editButton.type = 'button';
                     editButton.className = 'edit-btn';
                     editButton.textContent = '✏️ Edit';
-
                     editButton.addEventListener('click', () => {
                         selectStudent(student.id);
                     });
@@ -642,7 +639,6 @@
                     deleteButton.type = 'button';
                     deleteButton.className = 'delete-btn';
                     deleteButton.textContent = '🗑️ Delete';
-
                     deleteButton.addEventListener('click', () => {
                         deleteStudent(student.id);
                     });
@@ -697,14 +693,12 @@
                     ? '/api/students/' + encodeURIComponent(id)
                     : '/api/students';
 
-                const method = isEditing ? 'PUT' : 'POST';
                 const saveButton = document.getElementById('saveButton');
-
                 saveButton.disabled = true;
 
                 try {
                     const response = await fetch(url, {
-                        method: method,
+                        method: isEditing ? 'PUT' : 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
@@ -737,10 +731,7 @@
             );
 
             if (!student) {
-                showMessage(
-                    'Student record not found. Refresh the list and try again.',
-                    'error'
-                );
+                showMessage('Student record not found.', 'error');
                 return;
             }
 
@@ -775,10 +766,7 @@
             );
 
             if (!student) {
-                showMessage(
-                    'Student record not found. Refresh the list and try again.',
-                    'error'
-                );
+                showMessage('Student record not found.', 'error');
                 return;
             }
 
@@ -823,6 +811,114 @@
             }
 
             loadStudents();
+        }
+
+        async function loadClassmateRecords() {
+            const container = document.getElementById('classmateRecords');
+            const message = document.getElementById('classmateMessage');
+            const button = document.getElementById('loadClassmateButton');
+
+            container.textContent = "Loading classmate's records...";
+            message.className = 'status-message';
+            message.textContent = '';
+            button.disabled = true;
+
+            try {
+                const response = await fetch(classmateAPI);
+
+                if (!response.ok) {
+                    throw new Error(
+                        `API request failed with status ${response.status}. Check the URL and endpoint.`
+                    );
+                }
+
+                const data = await response.json();
+
+                console.log('Classmate API response:', data);
+
+                const records = Array.isArray(data)
+                    ? data
+                    : data.students ?? data.records ?? data.data;
+
+                if (!Array.isArray(records)) {
+                    throw new Error(
+                        'The API response does not contain a student records array. Check the browser console.'
+                    );
+                }
+
+                container.replaceChildren();
+
+                if (records.length === 0) {
+                    const empty = document.createElement('p');
+                    empty.className = 'empty-message';
+                    empty.textContent = 'No classmate records found.';
+                    container.appendChild(empty);
+                } else {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'student-table-wrapper';
+
+                    const table = document.createElement('table');
+                    table.className = 'student-table';
+
+                    const columns = [
+                        ['student_id', 'Student ID'],
+                        ['name', 'Full Name'],
+                        ['program', 'Program'],
+                        ['year', 'Year'],
+                        ['section', 'Section']
+                    ];
+
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+
+                    columns.forEach(([, label]) => {
+                        const th = document.createElement('th');
+                        th.textContent = label;
+                        headerRow.appendChild(th);
+                    });
+
+                    thead.appendChild(headerRow);
+
+                    const tbody = document.createElement('tbody');
+
+                    records.forEach(student => {
+                        const row = document.createElement('tr');
+
+                        columns.forEach(([key]) => {
+                            const td = document.createElement('td');
+                            td.textContent = student[key] ?? '';
+                            row.appendChild(td);
+                        });
+
+                        tbody.appendChild(row);
+                    });
+
+                    table.append(thead, tbody);
+                    wrapper.appendChild(table);
+                    container.appendChild(wrapper);
+                }
+
+                message.textContent =
+                    `Successfully loaded ${records.length} classmate record(s).`;
+                message.className = 'status-message success';
+
+            } catch (error) {
+                console.error('Classmate API error:', error);
+
+                container.replaceChildren();
+
+                const errorText = document.createElement('p');
+                errorText.className = 'empty-message';
+                errorText.textContent = error.message;
+                container.appendChild(errorText);
+
+                message.textContent =
+                    'Could not load records. Check the API URL, endpoint, server status, and CORS settings.';
+                message.className = 'status-message error';
+
+            } finally {
+                button.disabled = false;
+            }
         }
 
         loadStudents();
