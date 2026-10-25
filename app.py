@@ -1,26 +1,33 @@
+
+import sqlite3
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
+
+
+def get_db_connection():
+    conn = sqlite3.connect('students.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route("/api")
+
+@app.route('/api')
 def api():
     return "Welcome to my first API"
 
 
 @app.route('/student')
 def get_student():
-    return jsonify({
-        "student_id": "24-00347",
-        "name": "Kate Ashley Distura",
-        "program": "BSIT",
-        "year": 3,
-        "section": "B"
-    })
+    conn = get_db_connection()
+    students = conn.execute('SELECT * FROM students').fetchall()
+    conn.close()
+
+    return jsonify([dict(student) for student in students])
 
 
 @app.route('/hello')
@@ -31,7 +38,6 @@ def say_hello():
     })
 
 
-# New route for course information
 @app.route('/course')
 def get_course():
     return jsonify({
@@ -42,7 +48,6 @@ def get_course():
     })
 
 
-# New route for skills
 @app.route('/skills')
 def get_skills():
     return jsonify({
