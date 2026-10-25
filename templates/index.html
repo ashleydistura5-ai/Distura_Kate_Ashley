@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,7 +127,8 @@
 
         #result,
         #greeting,
-        #courseResult {
+        #courseResult,
+        #studentList {
             display: none;
             margin-top: 18px;
             padding: 15px;
@@ -143,12 +145,14 @@
         }
 
         #result p,
-        #courseResult p {
+        #courseResult p,
+        #studentList p {
             margin: 8px 0;
         }
 
         #result strong,
-        #courseResult strong {
+        #courseResult strong,
+        #studentList strong {
             color: #765293;
         }
 
@@ -171,6 +175,15 @@
         #courseResult {
             background: #fcfaff;
             border-left-color: #9675bd;
+        }
+
+        #studentList {
+            background: #f5effc;
+            border-left-color: #b69ad9;
+        }
+
+        #studentList strong {
+            color: #765293;
         }
 
         hr {
@@ -258,7 +271,9 @@
     <section class="card">
         <h2>🎓 Course Information</h2>
 
-        <span class="course-badge">Custom API Endpoint: /course</span>
+        <span class="course-badge">
+            Custom API Endpoint: /course
+        </span>
 
         <p class="description">
             View your course name, course code, year level, and section
@@ -272,8 +287,26 @@
         <div id="courseResult" aria-live="polite"></div>
     </section>
 
+    <section class="card">
+        <h2>📋 Students from Database</h2>
+
+        <p class="description">
+            View all student records stored in your SQLite database.
+        </p>
+
+        <button
+            id="loadStudentsBtn"
+            type="button"
+            onclick="loadStudents()"
+        >
+            Load Students
+        </button>
+
+        <div id="studentList" aria-live="polite"></div>
+    </section>
+
     <footer>
-        Made with 💜 using HTML, CSS, JavaScript, and Flask
+        Made with 💜 using HTML, CSS, JavaScript, Flask, and SQLite
     </footer>
 
     <script>
@@ -368,11 +401,14 @@
         document.getElementById('loadCourseBtn').addEventListener(
             'click',
             async function() {
-                const courseResult = document.getElementById('courseResult');
-                const button = document.getElementById('loadCourseBtn');
+                const courseResult =
+                    document.getElementById('courseResult');
+                const button =
+                    document.getElementById('loadCourseBtn');
 
                 courseResult.classList.add('visible');
-                courseResult.textContent = 'Loading course information...';
+                courseResult.textContent =
+                    'Loading course information...';
                 button.disabled = true;
 
                 try {
@@ -415,6 +451,63 @@
                 }
             }
         );
+
+        async function loadStudents() {
+            const studentList =
+                document.getElementById('studentList');
+            const button =
+                document.getElementById('loadStudentsBtn');
+
+            studentList.style.display = 'block';
+            studentList.textContent = 'Loading student records...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/students');
+
+                if (!response.ok) {
+                    throw new Error(
+                        'Unable to retrieve student records'
+                    );
+                }
+
+                const data = await response.json();
+
+                studentList.replaceChildren();
+
+                if (data.length === 0) {
+                    studentList.textContent =
+                        'No student records found.';
+                    return;
+                }
+
+                data.forEach(student => {
+                    const p = document.createElement('p');
+                    const strong = document.createElement('strong');
+
+                    strong.textContent =
+                        student.student_id ?? 'No Student ID';
+
+                    p.append(
+                        strong,
+                        document.createTextNode(
+                            ' - ' + (student.name ?? 'Unknown') +
+                            ' | ' + (student.program ?? 'N/A') +
+                            ' | Year ' + (student.year ?? 'N/A') +
+                            ' | Section ' + (student.section ?? 'N/A')
+                        )
+                    );
+
+                    studentList.appendChild(p);
+                });
+
+            } catch (error) {
+                studentList.textContent =
+                    'Unable to retrieve student records. Please check your API server and database.';
+            } finally {
+                button.disabled = false;
+            }
+        }
     </script>
 
 </body>
