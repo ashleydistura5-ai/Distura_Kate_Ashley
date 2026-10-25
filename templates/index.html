@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student API Interface</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8f4ff;
+            color: #49385f;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #a88bc8, #d5c2ef);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 6px 18px rgba(153, 119, 190, 0.15);
+        }
+
+        .icon {
+            font-size: 38px;
+        }
+
+        h1 {
+            margin: 8px 0;
+            font-size: 30px;
+            color: #ffffff;
+        }
+
+        header p {
+            margin: 0;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .card {
+            padding: 25px;
+            margin-bottom: 22px;
+            background: #ffffff;
+            border: 1px solid #e8dcf7;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(153, 119, 190, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 18px rgba(153, 119, 190, 0.13);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #765293;
+            font-size: 21px;
+        }
+
+        .description {
+            color: #877995;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 11px 17px;
+            margin-top: 8px;
+            background: #b69ad9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        button:hover {
+            background: #9675bd;
+            transform: translateY(-1px);
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid #b69ad9;
+            outline-offset: 3px;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: wait;
+            transform: none;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border: 1px solid #dfd0f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fdfbff;
+            color: #49385f;
+        }
+
+        input::placeholder {
+            color: #aa9ab9;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #b69ad9;
+            box-shadow: 0 0 0 3px rgba(182, 154, 217, 0.15);
+        }
+
+        #result,
+        #greeting,
+        #courseResult {
+            display: none;
+            margin-top: 18px;
+            padding: 15px;
+            background: #f5effc;
+            border-left: 4px solid #b69ad9;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        #result.visible,
+        #greeting.visible,
+        #courseResult.visible {
+            display: block;
+        }
+
+        #result p,
+        #courseResult p {
+            margin: 8px 0;
+        }
+
+        #result strong,
+        #courseResult strong {
+            color: #765293;
+        }
+
+        #greeting {
+            color: #765293;
+            font-weight: bold;
+        }
+
+        .course-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            margin-bottom: 10px;
+            background: #ede3fa;
+            color: #765293;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #courseResult {
+            background: #fcfaff;
+            border-left-color: #9675bd;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e8dcf7;
+            margin: 20px 0;
+        }
+
+        footer {
+            text-align: center;
+            color: #a08bb5;
+            font-size: 12px;
+            margin-top: 25px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                margin: 15px auto;
+                padding: 15px;
+            }
+
+            header {
+                padding: 25px 15px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="icon">🎓</div>
+        <h1>Student API Interface</h1>
+        <p>A simple space for student information and greetings.</p>
+    </header>
+
+    <section class="card">
+        <h2>📚 Student Information</h2>
+
+        <p class="description">
+            Retrieve and view student details with one click.
+        </p>
+
+        <button id="studentBtn" type="button" onclick="loadStudent()">
+            Load Student Information
+        </button>
+
+        <div id="result" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+        <h2>💜 Greeting API</h2>
+
+        <p class="description">
+            Enter your name to receive a personalized greeting.
+        </p>
+
+        <form id="greetingForm">
+            <input
+                type="text"
+                id="nameInput"
+                placeholder="Enter your first name"
+                autocomplete="given-name"
+                required
+            >
+
+            <button type="submit">Say Hello ✨</button>
+        </form>
+
+        <div id="greeting" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+        <h2>🎓 Course Information</h2>
+
+        <span class="course-badge">Custom API Endpoint: /course</span>
+
+        <p class="description">
+            View your course name, course code, year level, and section
+            by retrieving data from your custom Flask API.
+        </p>
+
+        <button id="loadCourseBtn" type="button">
+            Load Course Information
+        </button>
+
+        <div id="courseResult" aria-live="polite"></div>
+    </section>
+
+    <footer>
+        Made with 💜 using HTML, CSS, JavaScript, and Flask
+    </footer>
+
+    <script>
+        async function loadStudent() {
+            const result = document.getElementById('result');
+            const button = document.getElementById('studentBtn');
+
+            result.classList.add('visible');
+            result.textContent = 'Loading student information...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/student');
+
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                const data = await response.json();
+
+                result.replaceChildren();
+
+                const fields = [
+                    ['Student ID', data.student_id],
+                    ['Name', data.name],
+                    ['Program', data.program],
+                    ['Year', data.year],
+                    ['Section', data.section]
+                ];
+
+                fields.forEach(([label, value]) => {
+                    const p = document.createElement('p');
+                    const strong = document.createElement('strong');
+
+                    strong.textContent = label + ': ';
+
+                    p.append(
+                        strong,
+                        document.createTextNode(value ?? 'Not available')
+                    );
+
+                    result.appendChild(p);
+                });
+
+            } catch (error) {
+                result.textContent =
+                    'Unable to retrieve student data. Please check your API server.';
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        document.getElementById('greetingForm').addEventListener(
+            'submit',
+            async function(event) {
+                event.preventDefault();
+
+                const name = document.getElementById('nameInput')
+                    .value.trim();
+
+                const greeting = document.getElementById('greeting');
+
+                greeting.classList.add('visible');
+
+                if (!name) {
+                    greeting.textContent = 'Please enter your name.';
+                    return;
+                }
+
+                greeting.textContent = 'Loading greeting...';
+
+                try {
+                    const response = await fetch(
+                        '/hello?name=' + encodeURIComponent(name)
+                    );
+
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const data = await response.json();
+
+                    greeting.textContent = data.message;
+
+                } catch (error) {
+                    greeting.textContent =
+                        'Unable to retrieve greeting. Please check your API server.';
+                }
+            }
+        );
+
+        document.getElementById('loadCourseBtn').addEventListener(
+            'click',
+            async function() {
+                const courseResult = document.getElementById('courseResult');
+                const button = document.getElementById('loadCourseBtn');
+
+                courseResult.classList.add('visible');
+                courseResult.textContent = 'Loading course information...';
+                button.disabled = true;
+
+                try {
+                    const response = await fetch('/course');
+
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const data = await response.json();
+
+                    courseResult.replaceChildren();
+
+                    const fields = [
+                        ['Course Name', data.course],
+                        ['Course Code', data.code],
+                        ['Year Level', data.year],
+                        ['Section', data.section]
+                    ];
+
+                    fields.forEach(([label, value]) => {
+                        const p = document.createElement('p');
+                        const strong = document.createElement('strong');
+
+                        strong.textContent = label + ': ';
+
+                        p.append(
+                            strong,
+                            document.createTextNode(value ?? 'Not available')
+                        );
+
+                        courseResult.appendChild(p);
+                    });
+
+                } catch (error) {
+                    courseResult.textContent =
+                        'Unable to retrieve course information. Please check your API server.';
+                } finally {
+                    button.disabled = false;
+                }
+            }
+        );
+    </script>
+
+</body>
+</html>
