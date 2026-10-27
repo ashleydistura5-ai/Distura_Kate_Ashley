@@ -1,22 +1,30 @@
+
 import requests
+from flask import jsonify
 
-url = "https://ladoing-kc-jane-marie.onrender.com/skills"
+@app.route("/classmate-students", methods=["GET"])
+def get_classmate_students():
+    url = "https://ladoing-kc-jane-marie.onrender.com/students"
 
-try:
-    response = requests.get(url, timeout=30)
+    try:
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
 
-    if response.status_code == 200:
         data = response.json()
+        return jsonify(data), 200
 
-        print("Successfully connected to classmate's API!")
-        print("API Response:")
+    except requests.exceptions.Timeout:
+        return jsonify({
+            "error": "The classmate API timed out. Please try again."
+        }), 504
 
-        for key, value in data.items():
-            print(f"{key}: {value}")
+    except requests.exceptions.RequestException as error:
+        return jsonify({
+            "error": "Could not connect to the classmate API.",
+            "details": str(error)
+        }), 502
 
-    else:
-        print("Request failed.")
-        print("Status Code:", response.status_code)
-
-except requests.exceptions.RequestException as e:
-    print("Connection error:", e)
+    except ValueError:
+        return jsonify({
+            "error": "The classmate API did not return valid JSON."
+        }), 502
