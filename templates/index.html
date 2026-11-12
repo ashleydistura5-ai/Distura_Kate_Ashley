@@ -6,7 +6,9 @@
     <title>Student API Interface</title>
 
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -233,6 +235,57 @@
             padding: 9px 12px;
         }
 
+        /* INTEGRATION DASHBOARD */
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .dashboard-stat-card {
+            background: #f4edfb;
+            border: 1px solid #e7d9f5;
+            border-radius: 18px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .dashboard-stat-card h3 {
+            color: #8055a5;
+            margin-top: 0;
+        }
+
+        .dashboard-count {
+            font-size: 38px;
+            font-weight: bold;
+            color: #674582;
+            margin: 15px 0;
+        }
+
+        .dashboard-stat-card button {
+            margin-top: 10px;
+        }
+
+        .dashboard-records {
+            margin-top: 25px;
+        }
+
+        .dashboard-records h3 {
+            color: #8055a5;
+        }
+
+        .source-label {
+            display: inline-block;
+            padding: 7px 12px;
+            background: #eee5fa;
+            color: #674582;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
         /* PARTNER RECORD DETAILS */
 
         .partner-details-row td {
@@ -281,6 +334,12 @@
             padding: 15px;
         }
 
+        @media (max-width: 700px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 15px 10px;
@@ -316,6 +375,7 @@
     <!-- STUDENT INFORMATION -->
     <section class="card">
         <h2>📚 Student Information</h2>
+
         <p class="description">
             Retrieve and view student details with one click.
         </p>
@@ -332,7 +392,10 @@
     <!-- GREETING API -->
     <section class="card">
         <h2>💜 Greeting API</h2>
-        <p class="description">Enter a name to receive a greeting.</p>
+
+        <p class="description">
+            Enter a name to receive a greeting.
+        </p>
 
         <div class="form-group">
             <label for="greetingName">Name</label>
@@ -432,6 +495,76 @@
              role="status" aria-live="polite"></div>
     </section>
 
+    <!-- INTEGRATION DASHBOARD -->
+    <section class="card">
+
+        <h2>📊 Integration Dashboard</h2>
+
+        <p class="description">
+            View your local records, imported records, and retrieve records
+            from your partner API. Select a partner record to save it
+            directly to your own database.
+        </p>
+
+        <button type="button" onclick="refreshDashboard()">
+            🔄 Refresh Dashboard
+        </button>
+
+        <div class="dashboard-stats">
+
+            <!-- LOCAL RECORDS -->
+            <div class="dashboard-stat-card">
+                <h3>💜 My Local Records</h3>
+
+                <p class="dashboard-count" id="localRecordCount">0</p>
+
+                <button type="button"
+                        onclick="showDashboardRecords('local')">
+                    📂 Show Local Records
+                </button>
+            </div>
+
+            <!-- IMPORTED RECORDS -->
+            <div class="dashboard-stat-card">
+                <h3>📥 Imported Records</h3>
+
+                <p class="dashboard-count" id="importedRecordCount">0</p>
+
+                <button type="button"
+                        onclick="showDashboardRecords('imported')">
+                    📥 Show Imported Records
+                </button>
+            </div>
+
+            <!-- PARTNER RECORDS -->
+            <div class="dashboard-stat-card">
+                <h3>🌐 Partner Records</h3>
+
+                <p class="dashboard-count" id="partnerRecordCount">0</p>
+
+                <button type="button"
+                        id="dashboardPartnerButton"
+                        onclick="loadDashboardPartnerRecords()">
+                    🌐 Retrieve Partner Records
+                </button>
+            </div>
+
+        </div>
+
+        <div id="dashboardRecords" class="dashboard-records">
+            <p class="empty-message">
+                Click a button above to view your local, imported,
+                or partner records.
+            </p>
+        </div>
+
+        <div id="dashboardPartnerMessage"
+             class="status-message"
+             role="status"
+             aria-live="polite"></div>
+
+    </section>
+
     <!-- STUDENTS FROM DATABASE -->
     <section class="card">
         <h2>👥 Students from Database</h2>
@@ -513,6 +646,7 @@
 
 let selectedStudentId = null;
 let studentsCache = [];
+let partnerRecordsCache = [];
 let activePartnerDetailsRow = null;
 
 const classmateAPI =
@@ -524,12 +658,15 @@ const classmateAPI =
 // ==========================================
 
 function showMessage(message, type) {
+
     const box = document.getElementById('crudMessage');
+
     box.textContent = message;
     box.className = 'status-message ' + type;
 }
 
 async function getResponseData(response) {
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -549,9 +686,11 @@ async function getResponseData(response) {
 async function loadStudentInformation() {
 
     const box = document.getElementById('studentInformation');
+
     box.textContent = 'Loading student information...';
 
     try {
+
         const response = await fetch('/student');
         const student = await getResponseData(response);
 
@@ -581,7 +720,9 @@ async function loadStudentInformation() {
         });
 
     } catch (error) {
+
         box.textContent = error.message;
+
     }
 }
 
@@ -593,12 +734,14 @@ async function loadStudentInformation() {
 async function loadGreeting() {
 
     const name = document.getElementById('greetingName').value.trim();
+
     const result = document.getElementById('greetingResult');
 
     result.hidden = false;
     result.textContent = 'Loading...';
 
     try {
+
         const response = await fetch(
             '/hello?name=' + encodeURIComponent(name || 'Student')
         );
@@ -608,7 +751,9 @@ async function loadGreeting() {
         result.textContent = data.message ?? JSON.stringify(data);
 
     } catch (error) {
+
         result.textContent = error.message;
+
     }
 }
 
@@ -625,7 +770,9 @@ async function loadCourse() {
     result.textContent = 'Loading...';
 
     try {
+
         const response = await fetch('/course');
+
         const data = await getResponseData(response);
 
         result.textContent =
@@ -635,7 +782,9 @@ async function loadCourse() {
             ' | Section: ' + (data.section ?? 'Not available');
 
     } catch (error) {
+
         result.textContent = error.message;
+
     }
 }
 
@@ -652,7 +801,9 @@ async function loadSkills() {
     result.textContent = 'Loading...';
 
     try {
+
         const response = await fetch('/skills');
+
         const data = await getResponseData(response);
 
         const skills = Array.isArray(data.skills)
@@ -664,7 +815,386 @@ async function loadSkills() {
             : JSON.stringify(data);
 
     } catch (error) {
+
         result.textContent = error.message;
+
+    }
+}
+
+
+// ==========================================
+// SOURCE IDENTIFICATION
+// ==========================================
+
+function getRecordSource(student) {
+
+    return String(student.source ?? 'Unknown').trim();
+}
+
+function isLocalRecord(student) {
+
+    return getRecordSource(student).toLowerCase() === 'local';
+}
+
+
+// ==========================================
+// INTEGRATION DASHBOARD COUNTS
+// ==========================================
+
+function updateDashboardCounts() {
+
+    const localRecords = studentsCache.filter(isLocalRecord);
+
+    const importedRecords = studentsCache.filter(
+        student => !isLocalRecord(student)
+    );
+
+    document.getElementById('localRecordCount').textContent =
+        localRecords.length;
+
+    document.getElementById('importedRecordCount').textContent =
+        importedRecords.length;
+
+    document.getElementById('partnerRecordCount').textContent =
+        partnerRecordsCache.length;
+}
+
+
+// ==========================================
+// SHOW LOCAL OR IMPORTED RECORDS
+// ==========================================
+
+function showDashboardRecords(type) {
+
+    const container = document.getElementById('dashboardRecords');
+
+    const message = document.getElementById('dashboardPartnerMessage');
+
+    message.className = 'status-message';
+    message.textContent = '';
+
+    const records = type === 'local'
+        ? studentsCache.filter(isLocalRecord)
+        : studentsCache.filter(student => !isLocalRecord(student));
+
+    container.replaceChildren();
+
+    const heading = document.createElement('h3');
+
+    heading.textContent = type === 'local'
+        ? '💜 My Local Records'
+        : '📥 Imported Records';
+
+    container.appendChild(heading);
+
+    const count = document.createElement('p');
+
+    count.className = 'description';
+    count.textContent = `Total Records: ${records.length}`;
+
+    container.appendChild(count);
+
+    if (records.length === 0) {
+
+        const empty = document.createElement('p');
+
+        empty.className = 'empty-message';
+        empty.textContent = 'No records available.';
+
+        container.appendChild(empty);
+
+        return;
+    }
+
+    const wrapper = document.createElement('div');
+
+    wrapper.className = 'student-table-wrapper';
+
+    const table = document.createElement('table');
+
+    table.className = 'student-table';
+
+    const columns = [
+        ['student_id', 'Student ID'],
+        ['name', 'Full Name'],
+        ['program', 'Program'],
+        ['year', 'Year'],
+        ['section', 'Section'],
+        ['source', 'Source']
+    ];
+
+    const thead = document.createElement('thead');
+
+    const headerRow = document.createElement('tr');
+
+    columns.forEach(([, label]) => {
+
+        const th = document.createElement('th');
+
+        th.textContent = label;
+
+        headerRow.appendChild(th);
+
+    });
+
+    thead.appendChild(headerRow);
+
+    const tbody = document.createElement('tbody');
+
+    records.forEach(student => {
+
+        const row = document.createElement('tr');
+
+        columns.forEach(([key]) => {
+
+            const td = document.createElement('td');
+
+            td.textContent = key === 'source'
+                ? getRecordSource(student)
+                : student[key] ?? '';
+
+            row.appendChild(td);
+
+        });
+
+        tbody.appendChild(row);
+
+    });
+
+    table.append(thead, tbody);
+
+    wrapper.appendChild(table);
+
+    container.appendChild(wrapper);
+}
+
+
+// ==========================================
+// RETRIEVE PARTNER RECORDS IN DASHBOARD
+// SAVE BUTTON ONLY
+// ==========================================
+
+async function loadDashboardPartnerRecords() {
+
+    const container = document.getElementById('dashboardRecords');
+
+    const message = document.getElementById('dashboardPartnerMessage');
+
+    const button = document.getElementById('dashboardPartnerButton');
+
+    container.replaceChildren();
+
+    message.className = 'status-message';
+    message.textContent = '';
+
+    const loading = document.createElement('p');
+
+    loading.className = 'empty-message';
+    loading.textContent = 'Retrieving partner records...';
+
+    container.appendChild(loading);
+
+    button.disabled = true;
+
+    try {
+
+        const response = await fetch('/partner-records');
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Request failed with status ${response.status}.`
+            );
+        }
+
+        const data = await response.json();
+
+        const records = Array.isArray(data)
+            ? data
+            : data.students ?? data.records ?? data.data;
+
+        if (!Array.isArray(records)) {
+
+            throw new Error('Invalid partner records response.');
+
+        }
+
+        partnerRecordsCache = records;
+
+        updateDashboardCounts();
+
+        container.replaceChildren();
+
+        const heading = document.createElement('h3');
+
+        heading.textContent = '🌐 Partner Records';
+
+        container.appendChild(heading);
+
+        const count = document.createElement('p');
+
+        count.className = 'description';
+        count.textContent = `Total Partner Records: ${records.length}`;
+
+        container.appendChild(count);
+
+        if (records.length === 0) {
+
+            const empty = document.createElement('p');
+
+            empty.className = 'empty-message';
+            empty.textContent = 'No partner records found.';
+
+            container.appendChild(empty);
+
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+
+        wrapper.className = 'student-table-wrapper';
+
+        const table = document.createElement('table');
+
+        table.className = 'student-table';
+
+        const columns = [
+            ['student_id', 'Student ID'],
+            ['name', 'Full Name'],
+            ['program', 'Program'],
+            ['year', 'Year'],
+            ['section', 'Section']
+        ];
+
+        const thead = document.createElement('thead');
+
+        const headerRow = document.createElement('tr');
+
+        columns.forEach(([, label]) => {
+
+            const th = document.createElement('th');
+
+            th.textContent = label;
+
+            headerRow.appendChild(th);
+
+        });
+
+        const actionHeading = document.createElement('th');
+
+        actionHeading.textContent = 'Actions';
+
+        headerRow.appendChild(actionHeading);
+
+        thead.appendChild(headerRow);
+
+        const tbody = document.createElement('tbody');
+
+        records.forEach(record => {
+
+            const student = getPartnerStudentData(record);
+
+            const row = document.createElement('tr');
+
+            Object.values(student).forEach(value => {
+
+                const td = document.createElement('td');
+
+                td.textContent = value ?? '';
+
+                row.appendChild(td);
+
+            });
+
+            const actions = document.createElement('td');
+
+            actions.className = 'action-buttons';
+
+            // SAVE BUTTON ONLY
+
+            const saveButton = document.createElement('button');
+
+            saveButton.type = 'button';
+
+            saveButton.textContent = '💾 Save to My Database';
+
+            saveButton.addEventListener('click', () => {
+
+                savePartnerRecord(
+                    student,
+                    saveButton,
+                    'dashboardPartnerMessage'
+                );
+
+            });
+
+            actions.appendChild(saveButton);
+
+            row.appendChild(actions);
+
+            tbody.appendChild(row);
+
+        });
+
+        table.append(thead, tbody);
+
+        wrapper.appendChild(table);
+
+        container.appendChild(wrapper);
+
+        message.textContent =
+            `Successfully retrieved ${records.length} partner record(s).`;
+
+        message.className = 'status-message success';
+
+    } catch (error) {
+
+        partnerRecordsCache = [];
+
+        updateDashboardCounts();
+
+        container.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+
+        errorMessage.className = 'empty-message';
+        errorMessage.textContent = error.message;
+
+        container.appendChild(errorMessage);
+
+        message.textContent =
+            'Could not retrieve partner records. Check your /partner-records endpoint, partner API connection, and CORS settings.';
+
+        message.className = 'status-message error';
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+}
+
+
+// ==========================================
+// REFRESH INTEGRATION DASHBOARD
+// ==========================================
+
+async function refreshDashboard() {
+
+    const button = document.getElementById('dashboardPartnerButton');
+
+    button.disabled = true;
+
+    try {
+
+        await loadStudents();
+
+        await loadDashboardPartnerRecords();
+
+    } finally {
+
+        button.disabled = false;
+
     }
 }
 
@@ -676,10 +1206,13 @@ async function loadSkills() {
 async function loadStudents() {
 
     const list = document.getElementById('studentList');
+
     list.textContent = 'Loading student records...';
 
     try {
+
         const response = await fetch('/students');
+
         const data = await getResponseData(response);
 
         if (!Array.isArray(data)) {
@@ -689,6 +1222,8 @@ async function loadStudents() {
         }
 
         studentsCache = data;
+
+        updateDashboardCounts();
 
         if (
             selectedStudentId !== null &&
@@ -704,21 +1239,27 @@ async function loadStudents() {
         if (data.length === 0) {
 
             const empty = document.createElement('p');
+
             empty.className = 'empty-message';
+
             empty.textContent =
                 'No student records found in the database.';
 
             list.appendChild(empty);
+
             return;
         }
 
         const wrapper = document.createElement('div');
+
         wrapper.className = 'student-table-wrapper';
 
         const table = document.createElement('table');
+
         table.className = 'student-table';
 
         const thead = document.createElement('thead');
+
         const headerRow = document.createElement('tr');
 
         [
@@ -732,7 +1273,9 @@ async function loadStudents() {
         ].forEach(title => {
 
             const th = document.createElement('th');
+
             th.textContent = title;
+
             headerRow.appendChild(th);
 
         });
@@ -755,19 +1298,23 @@ async function loadStudents() {
                 student.program,
                 student.year,
                 student.section,
-                student.source ?? 'Not available'
+                getRecordSource(student)
             ].forEach(value => {
 
                 const td = document.createElement('td');
+
                 td.textContent = value ?? '';
+
                 row.appendChild(td);
 
             });
 
             const actions = document.createElement('td');
+
             actions.className = 'action-buttons';
 
             const editButton = document.createElement('button');
+
             editButton.type = 'button';
             editButton.className = 'edit-btn';
             editButton.textContent = '✏️ Edit';
@@ -777,6 +1324,7 @@ async function loadStudents() {
             });
 
             const deleteButton = document.createElement('button');
+
             deleteButton.type = 'button';
             deleteButton.className = 'delete-btn';
             deleteButton.textContent = '🗑️ Delete';
@@ -786,17 +1334,23 @@ async function loadStudents() {
             });
 
             actions.append(editButton, deleteButton);
+
             row.appendChild(actions);
+
             tbody.appendChild(row);
 
         });
 
         table.append(thead, tbody);
+
         wrapper.appendChild(table);
+
         list.appendChild(wrapper);
 
     } catch (error) {
+
         list.textContent = error.message;
+
     }
 }
 
@@ -830,10 +1384,12 @@ document.getElementById('studentForm').addEventListener(
             studentData.year < 1 ||
             studentData.year > 10
         ) {
+
             showMessage(
                 'Please fill in all fields with valid information.',
                 'error'
             );
+
             return;
         }
 
@@ -844,16 +1400,21 @@ document.getElementById('studentForm').addEventListener(
             : '/api/students';
 
         const saveButton = document.getElementById('saveButton');
+
         saveButton.disabled = true;
 
         try {
 
             const response = await fetch(url, {
+
                 method: isEditing ? 'PUT' : 'POST',
+
                 headers: {
                     'Content-Type': 'application/json'
                 },
+
                 body: JSON.stringify(studentData)
+
             });
 
             await getResponseData(response);
@@ -866,6 +1427,7 @@ document.getElementById('studentForm').addEventListener(
             );
 
             resetForm(false);
+
             await loadStudents();
 
         } catch (error) {
@@ -892,7 +1454,9 @@ function selectStudent(id) {
     );
 
     if (!student) {
+
         showMessage('Student record not found.', 'error');
+
         return;
     }
 
@@ -933,7 +1497,9 @@ async function deleteStudent(id) {
     );
 
     if (!student) {
+
         showMessage('Student record not found.', 'error');
+
         return;
     }
 
@@ -962,7 +1528,9 @@ async function deleteStudent(id) {
         await loadStudents();
 
     } catch (error) {
+
         showMessage(error.message, 'error');
+
     }
 }
 
@@ -974,6 +1542,7 @@ async function deleteStudent(id) {
 function resetForm(clearMessage = true) {
 
     document.getElementById('studentForm').reset();
+
     document.getElementById('databaseId').value = '';
 
     document.getElementById('saveButton').textContent =
@@ -986,6 +1555,7 @@ function resetForm(clearMessage = true) {
         const box = document.getElementById('crudMessage');
 
         box.className = 'status-message';
+
         box.textContent = '';
     }
 
@@ -1000,12 +1570,15 @@ function resetForm(clearMessage = true) {
 async function loadClassmateRecords() {
 
     const container = document.getElementById('classmateRecords');
+
     const message = document.getElementById('classmateMessage');
+
     const button = document.getElementById('loadClassmateButton');
 
     container.textContent = "Loading classmate's records...";
 
     message.className = 'status-message';
+
     message.textContent = '';
 
     button.disabled = true;
@@ -1015,6 +1588,7 @@ async function loadClassmateRecords() {
         const response = await fetch(classmateAPI);
 
         if (!response.ok) {
+
             throw new Error(
                 `API request failed with status ${response.status}. Check the URL and endpoint.`
             );
@@ -1029,6 +1603,7 @@ async function loadClassmateRecords() {
             : data.students ?? data.records ?? data.data;
 
         if (!Array.isArray(records)) {
+
             throw new Error(
                 'The API response does not contain a student records array.'
             );
@@ -1039,7 +1614,9 @@ async function loadClassmateRecords() {
         if (records.length === 0) {
 
             const empty = document.createElement('p');
+
             empty.className = 'empty-message';
+
             empty.textContent = 'No classmate records found.';
 
             container.appendChild(empty);
@@ -1047,9 +1624,11 @@ async function loadClassmateRecords() {
         } else {
 
             const wrapper = document.createElement('div');
+
             wrapper.className = 'student-table-wrapper';
 
             const table = document.createElement('table');
+
             table.className = 'student-table';
 
             const columns = [
@@ -1061,12 +1640,15 @@ async function loadClassmateRecords() {
             ];
 
             const thead = document.createElement('thead');
+
             const headerRow = document.createElement('tr');
 
             columns.forEach(([, label]) => {
 
                 const th = document.createElement('th');
+
                 th.textContent = label;
+
                 headerRow.appendChild(th);
 
             });
@@ -1082,6 +1664,7 @@ async function loadClassmateRecords() {
                 columns.forEach(([key]) => {
 
                     const td = document.createElement('td');
+
                     td.textContent = student[key] ?? '';
 
                     row.appendChild(td);
@@ -1093,7 +1676,9 @@ async function loadClassmateRecords() {
             });
 
             table.append(thead, tbody);
+
             wrapper.appendChild(table);
+
             container.appendChild(wrapper);
         }
 
@@ -1138,24 +1723,29 @@ function getPartnerStudentData(student) {
 
 
 // ==========================================
-// LOAD PARTNER RECORDS
+// LOAD PARTNER RECORDS - SEPARATE SECTION
+// VIEW DETAILS AND SAVE BUTTONS
 // ==========================================
 
 async function loadPartnerRecords() {
 
     const container = document.getElementById('partnerRecords');
+
     const message = document.getElementById('partnerMessage');
+
     const button = document.getElementById('loadPartnerButton');
 
-    // Close previously opened details when refreshing.
     if (activePartnerDetailsRow) {
+
         activePartnerDetailsRow.remove();
+
         activePartnerDetailsRow = null;
     }
 
     container.textContent = 'Loading partner records...';
 
     message.className = 'status-message';
+
     message.textContent = '';
 
     button.disabled = true;
@@ -1165,6 +1755,7 @@ async function loadPartnerRecords() {
         const response = await fetch('/partner-records');
 
         if (!response.ok) {
+
             throw new Error(
                 `Request failed with status ${response.status}.`
             );
@@ -1177,25 +1768,36 @@ async function loadPartnerRecords() {
             : data.students ?? data.records ?? data.data;
 
         if (!Array.isArray(records)) {
+
             throw new Error('Invalid partner records response.');
+
         }
+
+        partnerRecordsCache = records;
+
+        updateDashboardCounts();
 
         container.replaceChildren();
 
         if (records.length === 0) {
 
             const empty = document.createElement('p');
+
             empty.className = 'empty-message';
+
             empty.textContent = 'No partner records found.';
 
             container.appendChild(empty);
+
             return;
         }
 
         const wrapper = document.createElement('div');
+
         wrapper.className = 'student-table-wrapper';
 
         const table = document.createElement('table');
+
         table.className = 'student-table';
 
         const columns = [
@@ -1207,11 +1809,13 @@ async function loadPartnerRecords() {
         ];
 
         const thead = document.createElement('thead');
+
         const headerRow = document.createElement('tr');
 
         columns.forEach(([, label]) => {
 
             const th = document.createElement('th');
+
             th.textContent = label;
 
             headerRow.appendChild(th);
@@ -1219,9 +1823,11 @@ async function loadPartnerRecords() {
         });
 
         const actionHeading = document.createElement('th');
+
         actionHeading.textContent = 'Actions';
 
         headerRow.appendChild(actionHeading);
+
         thead.appendChild(headerRow);
 
         const tbody = document.createElement('tbody');
@@ -1235,6 +1841,7 @@ async function loadPartnerRecords() {
             Object.values(student).forEach(value => {
 
                 const td = document.createElement('td');
+
                 td.textContent = value ?? '';
 
                 row.appendChild(td);
@@ -1242,6 +1849,7 @@ async function loadPartnerRecords() {
             });
 
             const actions = document.createElement('td');
+
             actions.className = 'action-buttons';
 
 
@@ -1250,7 +1858,9 @@ async function loadPartnerRecords() {
             const viewButton = document.createElement('button');
 
             viewButton.type = 'button';
+
             viewButton.className = 'edit-btn';
+
             viewButton.textContent = '👁️ View Details';
 
             viewButton.addEventListener('click', () => {
@@ -1259,22 +1869,20 @@ async function loadPartnerRecords() {
                     record.id ?? student.student_id
                 );
 
-                // Close the previously opened details.
                 if (activePartnerDetailsRow) {
 
                     const previousKey =
                         activePartnerDetailsRow.dataset.partnerKey;
 
                     activePartnerDetailsRow.remove();
+
                     activePartnerDetailsRow = null;
 
-                    // Clicking the same student again closes its details.
                     if (previousKey === currentKey) {
                         return;
                     }
                 }
 
-                // Create the selected student's details.
                 const detailsRow = createPartnerDetailsRow(
                     record,
                     student,
@@ -1291,10 +1899,8 @@ async function loadPartnerRecords() {
 
                 detailsRow.dataset.partnerKey = currentKey;
 
-                // Track the currently opened details.
                 activePartnerDetailsRow = detailsRow;
 
-                // Display details directly below the selected student.
                 row.after(detailsRow);
 
             });
@@ -1305,6 +1911,7 @@ async function loadPartnerRecords() {
             const saveButton = document.createElement('button');
 
             saveButton.type = 'button';
+
             saveButton.textContent = '💾 Save to My Database';
 
             saveButton.addEventListener('click', () => {
@@ -1316,6 +1923,7 @@ async function loadPartnerRecords() {
             actions.append(viewButton, saveButton);
 
             row.appendChild(actions);
+
             tbody.appendChild(row);
 
         });
@@ -1323,6 +1931,7 @@ async function loadPartnerRecords() {
         table.append(thead, tbody);
 
         wrapper.appendChild(table);
+
         container.appendChild(wrapper);
 
         message.textContent =
@@ -1331,6 +1940,10 @@ async function loadPartnerRecords() {
         message.className = 'status-message success';
 
     } catch (error) {
+
+        partnerRecordsCache = [];
+
+        updateDashboardCounts();
 
         container.textContent = error.message;
 
@@ -1359,7 +1972,6 @@ function createPartnerDetailsRow(record, student, closeCallback) {
 
     const detailsCell = document.createElement('td');
 
-    // Five student columns plus one Actions column.
     detailsCell.colSpan = 6;
 
     const detailsBox = document.createElement('div');
@@ -1371,9 +1983,6 @@ function createPartnerDetailsRow(record, student, closeCallback) {
     heading.textContent = 'Complete Student Details';
 
     detailsBox.appendChild(heading);
-
-
-    // STANDARD STUDENT INFORMATION
 
     const fields = [
         ['ID', record.id],
@@ -1406,9 +2015,6 @@ function createPartnerDetailsRow(record, student, closeCallback) {
         detailsBox.appendChild(p);
 
     });
-
-
-    // DISPLAY OTHER AVAILABLE PARTNER INFORMATION
 
     const knownKeys = new Set([
         'id',
@@ -1454,12 +2060,10 @@ function createPartnerDetailsRow(record, student, closeCallback) {
 
     });
 
-
-    // CLOSE DETAILS BUTTON
-
     const closeButton = document.createElement('button');
 
     closeButton.type = 'button';
+
     closeButton.className = 'close-details-btn';
 
     closeButton.textContent = '✖ Close Details';
@@ -1469,6 +2073,7 @@ function createPartnerDetailsRow(record, student, closeCallback) {
     detailsBox.appendChild(closeButton);
 
     detailsCell.appendChild(detailsBox);
+
     detailsRow.appendChild(detailsCell);
 
     return detailsRow;
@@ -1479,7 +2084,11 @@ function createPartnerDetailsRow(record, student, closeCallback) {
 // SAVE A PARTNER RECORD
 // ==========================================
 
-async function savePartnerRecord(student, button) {
+async function savePartnerRecord(
+    student,
+    button,
+    messageElementId = 'partnerMessage'
+) {
 
     if (
         !student.student_id ||
@@ -1510,27 +2119,32 @@ async function savePartnerRecord(student, button) {
                 'Content-Type': 'application/json'
             },
 
-            body: JSON.stringify(student)
+            body: JSON.stringify({
+                ...student,
+                source: 'Partner API'
+            })
 
         });
 
         await getResponseData(response);
 
-        const message = document.getElementById('partnerMessage');
+        const message = document.getElementById(messageElementId);
 
         message.textContent =
             `${student.name} was successfully saved to your database.`;
 
         message.className = 'status-message success';
 
-        // Refresh local database records.
         await loadStudents();
+
+        updateDashboardCounts();
 
     } catch (error) {
 
-        const message = document.getElementById('partnerMessage');
+        const message = document.getElementById(messageElementId);
 
         message.textContent = error.message;
+
         message.className = 'status-message error';
 
     } finally {
