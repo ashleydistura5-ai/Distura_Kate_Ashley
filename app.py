@@ -1,4 +1,3 @@
-
 import os
 import sqlite3
 import requests
@@ -10,7 +9,11 @@ CORS(app)
 
 DATABASE = "students.db"
 
+# Partner's GET endpoint (Step 3)
 CLASSMATE_API_URL = "https://ladoing-kc-jane-marie.onrender.com/students"
+
+# Partner's POST endpoint (Step 9)
+PARTNER_POST_API_URL = "https://ladoing-kc-jane-marie.onrender.com/api/students"
 
 
 # ==========================================
@@ -38,21 +41,18 @@ def ensure_source_column():
         column_names = [column["name"] for column in columns]
 
         if columns and "source" not in column_names:
-
             conn.execute("""
                 ALTER TABLE students
                 ADD COLUMN source TEXT DEFAULT 'Local'
             """)
 
             conn.commit()
-
             print("Source column added successfully.")
 
     finally:
         conn.close()
 
 
-# Run database check when the application starts.
 ensure_source_column()
 
 
@@ -98,7 +98,9 @@ def get_students():
             "SELECT * FROM students"
         ).fetchall()
 
-        return jsonify([dict(student) for student in students])
+        return jsonify([
+            dict(student) for student in students
+        ])
 
     finally:
         conn.close()
@@ -114,14 +116,17 @@ def get_student_by_id(id):
 
     try:
         student = conn.execute(
-            "SELECT * FROM students WHERE id = ?", (id,)
+            "SELECT * FROM students WHERE id = ?",
+            (id,)
         ).fetchone()
 
     finally:
         conn.close()
 
     if student is None:
-        return jsonify({"error": "Student not found"}), 404
+        return jsonify({
+            "error": "Student not found"
+        }), 404
 
     return jsonify(dict(student))
 
@@ -140,7 +145,9 @@ def get_students_by_section(section_name):
             (section_name.upper(),)
         ).fetchall()
 
-        return jsonify([dict(student) for student in students])
+        return jsonify([
+            dict(student) for student in students
+        ])
 
     finally:
         conn.close()
@@ -193,6 +200,7 @@ def get_skills():
 
 # ==========================================
 # STEP 3: PARTNER API ENDPOINT
+# RETRIEVE RECORDS FROM PARTNER
 # ==========================================
 
 @app.route("/partner-records", methods=["GET"])
@@ -243,6 +251,7 @@ def get_classmate_students():
 
 # ==========================================
 # STEP 5: IMPORT PARTNER STUDENT
+# SAVE PARTNER RECORD TO LOCAL DATABASE
 # ==========================================
 
 @app.route("/import-student", methods=["POST"])
@@ -324,7 +333,7 @@ def import_student():
 
 
 # ==========================================
-# ADD LOCAL STUDENT
+# STEP 8: RECEIVE EXTERNAL API RECORDS
 # ==========================================
 
 @app.route("/api/students", methods=["POST"])
@@ -370,6 +379,16 @@ def add_student():
             "error": "Year must be a number from 1 to 10"
         }), 400
 
+    # Get source from received JSON.
+    # If no source is provided, use External API.
+
+    source = str(
+        data.get("source", "External API")
+    ).strip()
+
+    if not source:
+        source = "External API"
+
     conn = get_db_connection()
 
     try:
@@ -385,18 +404,16 @@ def add_student():
                 str(data["program"]).strip(),
                 year,
                 str(data["section"]).strip().upper(),
-                "Local"
+                source
             )
         )
 
         conn.commit()
 
-        new_id = cursor.lastrowid
-
         return jsonify({
             "message": "Student added successfully",
-            "id": new_id,
-            "source": "Local"
+            "id": cursor.lastrowid,
+            "source": source
         }), 201
 
     except sqlite3.IntegrityError as error:
@@ -406,6 +423,50 @@ def add_student():
 
     finally:
         conn.close()
+
+
+# ==========================================
+# STEP 9: SEND A PRACTICE RECORD TO PARTNER
+# ==========================================
+
+@app.route("/send-to-partner", methods=["POST"])
+def send_to_partner():
+
+    # Sample practice record.
+
+    record = {
+        "student_id": "EXT-001",
+        "name": "Sample Exchange Record",
+        "program": "BSIT",
+        "year": 1,
+        "section": "A",
+        "source": "Partner API"
+    }
+
+    try:
+        response = requests.post(
+            PARTNER_POST_API_URL,
+            json=record,
+            timeout=15
+        )
+
+        return jsonify({
+            "message": "Practice record sent to partner.",
+            "status_code": response.status_code,
+            "partner_response": response.text,
+            "sent_record": record
+        }), response.status_code
+
+    except requests.exceptions.Timeout:
+        return jsonify({
+            "error": "The partner API request timed out."
+        }), 504
+
+    except requests.exceptions.RequestException as error:
+        return jsonify({
+            "error": "Unable to send record to partner.",
+            "details": str(error)
+        }), 502
 
 
 # ==========================================
@@ -419,7 +480,8 @@ def api_get_student(id):
 
     try:
         student = conn.execute(
-            "SELECT * FROM students WHERE id = ?", (id,)
+            "SELECT * FROM students WHERE id = ?",
+            (id,)
         ).fetchone()
 
     finally:
@@ -484,7 +546,8 @@ def update_student(id):
 
     try:
         existing = conn.execute(
-            "SELECT id FROM students WHERE id = ?", (id,)
+            "SELECT id FROM students WHERE id = ?",
+            (id,)
         ).fetchone()
 
         if existing is None:
@@ -540,7 +603,8 @@ def delete_student(id):
 
     try:
         cursor = conn.execute(
-            "DELETE FROM students WHERE id = ?", (id,)
+            "DELETE FROM students WHERE id = ?",
+            (id,)
         )
 
         if cursor.rowcount == 0:
